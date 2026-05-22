@@ -1,5 +1,11 @@
 import os
 import sys
+
+# Allow running as `python3 paperwiki/main.py` in addition to `python3 -m paperwiki.main`
+_package_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _package_dir not in sys.path:
+    sys.path.insert(0, _package_dir)
+
 import time
 import logging
 from paperwiki.config import load_config
