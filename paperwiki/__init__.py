@@ -1,0 +1,1 @@
+"""PaperWiki - AI-powered PDF-to-Obsidian learning report generator."""

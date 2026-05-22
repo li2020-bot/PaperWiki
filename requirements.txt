@@ -1,0 +1,7 @@
+watchdog>=4.0.0
+PyMuPDF>=1.24.0
+ollama>=0.3.0
+openai>=1.30.0
+PyYAML>=6.0
+Jinja2>=3.1.0
+pytest>=8.0.0
