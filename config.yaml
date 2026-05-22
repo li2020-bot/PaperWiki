@@ -1,0 +1,37 @@
+paths:
+  raw_papers: ~/Documents/raw_papers
+  obsidian_vault: ~/Documents/ObsidianVault
+  wiki_subdir: wiki
+  raw_subdir: raw
+
+ai:
+  backend: ollama              # ollama | openai | deepseek | minimax | qwen | custom
+  ollama:
+    base_url: http://localhost:11434
+    model: qwen3
+  openai:
+    base_url: https://api.openai.com/v1
+    api_key: ${OPENAI_API_KEY}
+    model: gpt-4o
+  deepseek:
+    base_url: https://api.deepseek.com
+    api_key: ${DEEPSEEK_API_KEY}
+    model: deepseek-chat
+  minimax:
+    base_url: https://api.minimax.chat/v1
+    api_key: ${MINIMAX_API_KEY}
+    model: MiniMax-M1
+  qwen:
+    base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+    api_key: ${QWEN_API_KEY}
+    model: qwen-plus
+  custom:
+    base_url: https://your-api-endpoint
+    api_key: ${CUSTOM_API_KEY}
+    model: your-model-name
+
+report:
+  language: zh-CN
+
+processing:
+  temp_dir: /tmp/paperwiki
