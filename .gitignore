@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+processed_files.json
+error.log
+.paperwiki_processed.json
