@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import logging
 from paperwiki.config import load_config
 from paperwiki.pdf_extractor import extract_text
@@ -14,11 +15,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger("paperwiki")
 
-ERROR_LOG = "error.log"
 
-
-def _log_error(message: str):
-    with open(ERROR_LOG, "a") as f:
+def _log_error(error_log_path: str, message: str):
+    with open(error_log_path, "a", encoding="utf-8") as f:
         f.write(message + "\n")
     logger.error(message)
 
@@ -27,11 +26,15 @@ def process_pdf(pdf_path: str, config, ai_client=None) -> bool:
     if not pdf_path.lower().endswith(".pdf"):
         return False
 
+    error_log_path = os.path.join(config.paths.obsidian_vault, "error.log")
+    processed_path = os.path.join(config.paths.obsidian_vault, ".paperwiki_processed.json")
+
     ai = ai_client or AIClient(config)
     writer = ObsidianWriter(
         config.paths.obsidian_vault,
         config.paths.wiki_subdir,
         config.paths.raw_subdir,
+        processed_path=processed_path,
     )
 
     if writer.is_processed(pdf_path):
@@ -43,22 +46,23 @@ def process_pdf(pdf_path: str, config, ai_client=None) -> bool:
     try:
         text, metadata = extract_text(pdf_path)
     except Exception as e:
-        _log_error(f"PDF extraction failed for {pdf_path}: {e}")
+        _log_error(error_log_path, f"PDF extraction failed for {pdf_path}: {e}")
         return False
+
+    title = metadata.get("title") or "Untitled"
+    writer.save_raw_text(text, title, pdf_path)
 
     try:
         generator = ReportGenerator(config, ai)
         report = generator.generate_report(text, metadata, source_file=pdf_path)
     except Exception as e:
-        _log_error(f"AI report generation failed for {pdf_path}: {e}")
+        _log_error(error_log_path, f"AI report generation failed for {pdf_path}: {e}")
         return False
 
     try:
-        title = metadata.get("title") or "Untitled"
         writer.save_report(report, title, pdf_path)
-        writer.save_raw_text(text, title, pdf_path)
     except Exception as e:
-        _log_error(f"Failed to write output for {pdf_path}: {e}")
+        _log_error(error_log_path, f"Failed to write output for {pdf_path}: {e}")
         return False
 
     logger.info(f"Completed: {pdf_path}")
@@ -72,6 +76,9 @@ def main():
     os.makedirs(config.paths.obsidian_vault, exist_ok=True)
     os.makedirs(config.processing.temp_dir, exist_ok=True)
 
+    error_log_path = os.path.join(config.paths.obsidian_vault, "error.log")
+    processed_path = os.path.join(config.paths.obsidian_vault, ".paperwiki_processed.json")
+
     logger.info(f"Watching: {config.paths.raw_papers}")
     logger.info(f"Output: {config.paths.obsidian_vault}/{config.paths.wiki_subdir}")
     logger.info(f"AI Backend: {config.ai.backend}")
@@ -83,7 +90,11 @@ def main():
         def on_created(self, event):
             if event.is_directory:
                 return
-            process_pdf(event.src_path, config)
+            try:
+                time.sleep(1)
+                process_pdf(event.src_path, config)
+            except Exception as e:
+                _log_error(error_log_path, f"Handler crashed for {event.src_path}: {e}")
 
     observer = Observer()
     observer.schedule(PDFHandler(), config.paths.raw_papers, recursive=False)
