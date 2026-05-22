@@ -1,8 +1,14 @@
 import os
 import json
 import tempfile
-import hashlib
 from paperwiki.obsidian_writer import ObsidianWriter
+
+
+def _temp_pdf(dir_path: str, filename: str, content: bytes = b"pdf content") -> str:
+    pdf_path = os.path.join(dir_path, filename)
+    with open(pdf_path, "wb") as f:
+        f.write(content)
+    return pdf_path
 
 
 def test_sanitize_filename():
@@ -14,11 +20,12 @@ def test_sanitize_filename():
 def test_save_report_creates_file():
     with tempfile.TemporaryDirectory() as tmp:
         vault = os.path.join(tmp, "vault")
+        source_file = _temp_pdf(tmp, "test.pdf")
         writer = ObsidianWriter(vault, "wiki", "raw")
         writer.save_report(
             report_markdown="# Test Report\nContent here.",
             title="Test Paper Title",
-            source_file="/tmp/test.pdf",
+            source_file=source_file,
         )
 
         expected_dir = os.path.join(vault, "wiki")
@@ -34,11 +41,12 @@ def test_save_report_creates_file():
 def test_save_raw_text_creates_file():
     with tempfile.TemporaryDirectory() as tmp:
         vault = os.path.join(tmp, "vault")
+        source_file = _temp_pdf(tmp, "test.pdf")
         writer = ObsidianWriter(vault, "wiki", "raw")
         writer.save_raw_text(
             raw_text="Raw paper text content.",
             title="Test Paper Title",
-            source_file="/tmp/test.pdf",
+            source_file=source_file,
         )
 
         expected_dir = os.path.join(vault, "wiki", "raw")
@@ -55,27 +63,29 @@ def test_processed_files_tracking():
     with tempfile.TemporaryDirectory() as tmp:
         vault = os.path.join(tmp, "vault")
         processed_path = os.path.join(tmp, "processed.json")
+        source_file = _temp_pdf(tmp, "paper1.pdf")
         writer = ObsidianWriter(vault, "wiki", "raw", processed_path)
 
-        writer.save_report("# Report", "Paper One", "/tmp/paper1.pdf")
+        writer.save_report("# Report", "Paper One", source_file)
 
         with open(processed_path, "r") as f:
             data = json.load(f)
-        assert "/tmp/paper1.pdf" in data
-        assert "hash" in data["/tmp/paper1.pdf"]
-        assert data["/tmp/paper1.pdf"]["output_file"] == "Paper One.md"
+        assert source_file in data
+        assert "hash" in data[source_file]
+        assert data[source_file]["output_file"] == "Paper One.md"
 
 
 def test_is_processed():
     with tempfile.TemporaryDirectory() as tmp:
         vault = os.path.join(tmp, "vault")
         processed_path = os.path.join(tmp, "processed.json")
+        source_file = _temp_pdf(tmp, "paper.pdf")
         writer = ObsidianWriter(vault, "wiki", "raw", processed_path)
 
-        assert not writer.is_processed("/tmp/nonexistent.pdf")
+        assert not writer.is_processed(source_file)
 
-        writer.save_report("# Report", "Paper Test", "/tmp/paper.pdf")
-        assert writer.is_processed("/tmp/paper.pdf")
+        writer.save_report("# Report", "Paper Test", source_file)
+        assert writer.is_processed(source_file)
 
 
 def test_hash_calculation():
