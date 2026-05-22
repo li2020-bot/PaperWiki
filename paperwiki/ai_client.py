@@ -9,20 +9,12 @@ VALID_BACKENDS = ("ollama", "openai", "deepseek", "minimax", "qwen", "custom")
 
 class AIClient:
     def __init__(self, config: Config):
-        self.config = config
         self.backend = config.ai.backend
         if self.backend not in VALID_BACKENDS:
             raise ValueError(f"Unknown AI backend: {self.backend}")
-
-    def _get_backend_config(self) -> dict:
-        section = getattr(self.config.ai, self.backend, None)
-        if section is None:
-            raise ValueError(f"Unknown AI backend: {self.backend}")
-        return {
-            "base_url": section.base_url,
-            "api_key": getattr(section, "api_key", ""),
-            "model": section.model,
-        }
+        self._cfg = getattr(config.ai, self.backend, None)
+        if self._cfg is None:
+            raise ValueError(f"No config found for backend: {self.backend}")
 
     def chat(self, messages: list[dict], max_retries: int = 3) -> str:
         if self.backend == "ollama":
@@ -32,12 +24,11 @@ class AIClient:
 
     def _chat_ollama(self, messages: list[dict], max_retries: int) -> str:
         import ollama
-        cfg = self._get_backend_config()
 
         for attempt in range(max_retries):
             try:
                 response = ollama.chat(
-                    model=cfg["model"],
+                    model=self._cfg.model,
                     messages=messages,
                     options={"temperature": 0.3},
                 )
@@ -53,14 +44,13 @@ class AIClient:
 
     def _chat_openai_compat(self, messages: list[dict], max_retries: int) -> str:
         from openai import OpenAI
-        cfg = self._get_backend_config()
 
-        client = OpenAI(base_url=cfg["base_url"], api_key=cfg["api_key"])
+        client = OpenAI(base_url=self._cfg.base_url, api_key=self._cfg.api_key)
 
         for attempt in range(max_retries):
             try:
                 response = client.chat.completions.create(
-                    model=cfg["model"],
+                    model=self._cfg.model,
                     messages=messages,
                     temperature=0.3,
                 )

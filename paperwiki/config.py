@@ -41,10 +41,6 @@ class AIConfig:
     backend: str = "ollama"
     ollama: OllamaConfig = field(default_factory=OllamaConfig)
     openai: OpenAICompatConfig = field(default_factory=OpenAICompatConfig)
-    deepseek: OpenAICompatConfig = field(default_factory=OpenAICompatConfig)
-    minimax: OpenAICompatConfig = field(default_factory=OpenAICompatConfig)
-    qwen: OpenAICompatConfig = field(default_factory=OpenAICompatConfig)
-    custom: OpenAICompatConfig = field(default_factory=OpenAICompatConfig)
 
 
 @dataclass
@@ -80,6 +76,15 @@ class Config:
     processing: ProcessingConfig
 
 
+def _load_backend_config(backend: str, section: dict):
+    if backend == "ollama":
+        return OllamaConfig(**section)
+    else:
+        if "api_key" in section:
+            section["api_key"] = _interpolate_env(section["api_key"])
+        return OpenAICompatConfig(**section)
+
+
 def load_config(config_path: str = "config.yaml") -> Config:
     with open(config_path, "r") as f:
         raw = yaml.safe_load(f)
@@ -87,16 +92,12 @@ def load_config(config_path: str = "config.yaml") -> Config:
     paths = PathsConfig(**raw["paths"])
 
     ai_raw = raw["ai"]
-    ai = AIConfig(backend=ai_raw["backend"])
-    for key in ("ollama", "openai", "deepseek", "minimax", "qwen", "custom"):
-        if key in ai_raw:
-            section = ai_raw[key].copy()
-            if "api_key" in section:
-                section["api_key"] = _interpolate_env(section["api_key"])
-            if key == "ollama":
-                setattr(ai, key, OllamaConfig(**section))
-            else:
-                setattr(ai, key, OpenAICompatConfig(**section))
+    backend = ai_raw["backend"]
+    ai = AIConfig(backend=backend)
+
+    if backend in ai_raw:
+        section = ai_raw[backend].copy()
+        setattr(ai, backend, _load_backend_config(backend, section))
 
     report = ReportConfig(**raw.get("report", {}))
     processing = ProcessingConfig(**raw.get("processing", {}))

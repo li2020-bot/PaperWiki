@@ -77,7 +77,6 @@ def main():
     os.makedirs(config.processing.temp_dir, exist_ok=True)
 
     error_log_path = os.path.join(config.paths.obsidian_vault, "error.log")
-    processed_path = os.path.join(config.paths.obsidian_vault, ".paperwiki_processed.json")
 
     logger.info(f"Watching: {config.paths.raw_papers}")
     logger.info(f"Output: {config.paths.obsidian_vault}/{config.paths.wiki_subdir}")
