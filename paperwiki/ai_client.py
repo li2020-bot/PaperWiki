@@ -1,11 +1,18 @@
 import time
+import logging
 from paperwiki.config import Config
+
+logger = logging.getLogger("paperwiki.ai_client")
+
+VALID_BACKENDS = ("ollama", "openai", "deepseek", "minimax", "qwen", "custom")
 
 
 class AIClient:
     def __init__(self, config: Config):
         self.config = config
         self.backend = config.ai.backend
+        if self.backend not in VALID_BACKENDS:
+            raise ValueError(f"Unknown AI backend: {self.backend}")
 
     def _get_backend_config(self) -> dict:
         section = getattr(self.config.ai, self.backend, None)
@@ -38,6 +45,10 @@ class AIClient:
             except Exception as e:
                 if attempt == max_retries - 1:
                     raise
+                logger.warning(
+                    "Ollama chat attempt %d/%d failed: %s. Retrying in %ds...",
+                    attempt + 1, max_retries, e, 2 ** attempt,
+                )
                 time.sleep(2 ** attempt)
 
     def _chat_openai_compat(self, messages: list[dict], max_retries: int) -> str:
@@ -57,4 +68,8 @@ class AIClient:
             except Exception as e:
                 if attempt == max_retries - 1:
                     raise
+                logger.warning(
+                    "%s chat attempt %d/%d failed: %s. Retrying in %ds...",
+                    self.backend, attempt + 1, max_retries, e, 2 ** attempt,
+                )
                 time.sleep(2 ** attempt)
