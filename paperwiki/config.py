@@ -14,7 +14,11 @@ def _interpolate_env(value: str) -> str:
     pattern = re.compile(r"\$\{(\w+)\}")
     matches = pattern.findall(value)
     for name in matches:
-        env_val = os.environ.get(name, "")
+        env_val = os.environ.get(name)
+        if env_val is None:
+            raise KeyError(
+                f"Environment variable '{name}' referenced in config is not set"
+            )
         value = value.replace(f"${{{name}}}", env_val)
     return value
 

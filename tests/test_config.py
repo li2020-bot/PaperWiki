@@ -39,7 +39,8 @@ processing:
 
 def test_load_config_env_var_interpolation():
     os.environ["TEST_API_KEY"] = "sk-test-123"
-    yaml_content = """
+    try:
+        yaml_content = """
 paths:
   raw_papers: ~/papers
   obsidian_vault: ~/vault
@@ -56,15 +57,17 @@ report:
 processing:
   temp_dir: /tmp/test
 """
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        f.write(yaml_content)
-        tmp_path = f.name
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            f.write(yaml_content)
+            tmp_path = f.name
 
-    try:
-        config = load_config(tmp_path)
-        assert config.ai.openai.api_key == "sk-test-123"
+        try:
+            config = load_config(tmp_path)
+            assert config.ai.openai.api_key == "sk-test-123"
+        finally:
+            os.unlink(tmp_path)
     finally:
-        os.unlink(tmp_path)
+        del os.environ["TEST_API_KEY"]
 
 
 def test_expand_tilde():
