@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from paperwiki.config import Config, PathsConfig, AIConfig, ReportConfig, ProcessingConfig
 from paperwiki.config import OllamaConfig
 from paperwiki.report_generator import ReportGenerator, SYSTEM_PROMPT, REPORT_TEMPLATE

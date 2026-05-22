@@ -1,9 +1,10 @@
 import json
-import re
+import logging
 from datetime import datetime
 from jinja2 import Template
 from paperwiki.config import Config
 
+logger = logging.getLogger("paperwiki.report_generator")
 
 SYSTEM_PROMPT = """你是一个学术论文分析助手。根据提供的论文文本，生成一份JSON格式的分析报告。
 JSON必须包含以下字段：
@@ -36,13 +37,8 @@ REPORT_TEMPLATE = """# {{ title }}
 *自动生成于 {{ generated_at }} | 来源: {{ source_file }}*"""
 
 
-def _sanitize_filename(name: str) -> str:
-    return re.sub(r'[\\/:*?"<>|]', "_", name)
-
-
 class ReportGenerator:
     def __init__(self, config: Config, ai_client):
-        self.config = config
         self.ai_client = ai_client
         self.template = Template(REPORT_TEMPLATE)
 
@@ -52,7 +48,14 @@ class ReportGenerator:
             {"role": "user", "content": paper_text},
         ]
         response = self.ai_client.chat(messages)
-        return json.loads(self._extract_json(response))
+        try:
+            return json.loads(self._extract_json(response))
+        except json.JSONDecodeError:
+            logger.error(
+                "Failed to parse AI response as JSON. Raw response:\n%s",
+                response,
+            )
+            raise
 
     def _extract_json(self, text: str) -> str:
         text = text.strip()
