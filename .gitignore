@@ -7,3 +7,5 @@ error.log
 config.yaml
 build/
 dist/
+.DS_Store
+prompt.md
