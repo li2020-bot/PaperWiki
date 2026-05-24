@@ -37,11 +37,10 @@ class FakeConfig:
             self.raw_papers = raw_papers
             self.obsidian_vault = obsidian_vault
             self.wiki_subdir = "wiki"
-            self.raw_subdir = "raw"
     class AI:
         backend = "test"
     class Report:
-        language = "zh-CN"
+        multi_angle = False
     class Processing:
         temp_dir = "/tmp/paperwiki_test"
 
@@ -65,13 +64,20 @@ def test_full_pipeline():
 
         fake_response = {
             "title": "Attention Is All You Need",
-            "summary": "本文提出了Transformer架构，完全基于注意力机制，摒弃了传统的循环和卷积结构。",
-            "entities": [
-                {"name": "Transformer", "type": "方法"},
-                {"name": "Self-Attention", "type": "概念"},
-                {"name": "Multi-Head Attention", "type": "概念"},
-                {"name": "Vaswani", "type": "人物"},
+            "tldr": "提出Transformer架构，完全基于注意力机制，在机器翻译等任务上取得突破性进展。",
+            "background": "传统序列建模依赖循环或卷积网络，计算效率低，难以捕捉长距离依赖。",
+            "method": "提出基于多头自注意力机制的编码器-解码器架构，并行计算序列所有位置的关联。",
+            "key_findings": [
+                "在WMT机器翻译任务上达到SOTA，训练时间大幅缩短。",
+                "注意力机制可以学习到丰富的句法和语义关系。",
             ],
+            "entities": [
+                {"name": "Transformer", "type": "方法", "section": "3. Model Architecture", "brief": "基于自注意力的序列模型"},
+                {"name": "Self-Attention", "type": "概念", "section": "2. Background", "brief": "序列自身不同位置的注意力计算"},
+                {"name": "Multi-Head Attention", "type": "概念", "section": "3. Model Architecture", "brief": "多组注意力并行计算"},
+                {"name": "Vaswani", "type": "人物", "section": "1. Introduction", "brief": "Transformer论文第一作者"},
+            ],
+            "keywords": ["Transformer", "attention", "self-attention", "machine translation"],
             "references": [
                 "Vaswani et al., Attention Is All You Need, NeurIPS 2017",
                 "Bahdanau et al., Neural Machine Translation by Jointly Learning to Align and Translate, ICLR 2015",
@@ -83,28 +89,20 @@ def test_full_pipeline():
         assert result is True
 
         report_path = os.path.join(vault_dir, "wiki", "Attention Is All You Need.md")
-        raw_path = os.path.join(vault_dir, "wiki", "raw", "Attention Is All You Need.md")
 
         assert os.path.exists(report_path)
-        assert os.path.exists(raw_path)
 
         with open(report_path, "r") as f:
             report = f.read()
 
-        assert "# Attention Is All You Need" in report
+        assert "## TL;DR" in report
         assert "Transformer" in report
         assert "[[Transformer]]" in report
         assert "[[Self-Attention]]" in report
         assert "[[Multi-Head Attention]]" in report
         assert "[[Vaswani]]" in report
-        assert "[[raw/Attention Is All You Need" in report
         assert "Vaswani et al., Attention Is All You Need, NeurIPS 2017" in report
         assert "自动生成于" in report
-
-        with open(raw_path, "r") as f:
-            raw = f.read()
-        assert "Attention Is All You Need" in raw
-        assert "The dominant sequence transduction models" in raw
 
         result2 = process_pdf(pdf_path, config, ai_client=fake_ai)
         assert result2 is False
@@ -121,8 +119,15 @@ def test_pipeline_with_non_ascii_title():
 
         fake_response = {
             "title": "深度学习在自然语言处理中的应用研究",
-            "summary": "本文探讨了深度学习在NLP中的应用。",
-            "entities": [{"name": "深度学习", "type": "方法"}, {"name": "NLP", "type": "术语"}],
+            "tldr": "探讨了深度学习在NLP中的应用进展。",
+            "background": "NLP任务需要强大的特征表示能力。",
+            "method": "采用深度神经网络进行文本特征学习和语义建模。",
+            "key_findings": ["本文探讨了深度学习在NLP中的应用。"],
+            "entities": [
+                {"name": "深度学习", "type": "方法", "section": "1. Introduction", "brief": "多层神经网络学习范式"},
+                {"name": "NLP", "type": "术语", "section": "1. Introduction", "brief": "自然语言处理领域"},
+            ],
+            "keywords": ["深度学习", "自然语言处理", "NLP"],
             "references": [],
         }
 
@@ -131,10 +136,8 @@ def test_pipeline_with_non_ascii_title():
         assert result is True
 
         report_path = os.path.join(vault_dir, "wiki", "深度学习在自然语言处理中的应用研究.md")
-        raw_path = os.path.join(vault_dir, "wiki", "raw", "深度学习在自然语言处理中的应用研究.md")
 
         assert os.path.exists(report_path)
-        assert os.path.exists(raw_path)
 
         with open(report_path, "r") as f:
             report = f.read()

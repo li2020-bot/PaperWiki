@@ -9,7 +9,7 @@ if _package_dir not in sys.path:
 import time
 import logging
 from paperwiki.config import load_config
-from paperwiki.pdf_extractor import extract_text
+from paperwiki.pdf_extractor import extract_pdf_text
 from paperwiki.ai_client import AIClient
 from paperwiki.report_generator import ReportGenerator
 from paperwiki.obsidian_writer import ObsidianWriter
@@ -39,7 +39,6 @@ def process_pdf(pdf_path: str, config, ai_client=None) -> bool:
     writer = ObsidianWriter(
         config.paths.obsidian_vault,
         config.paths.wiki_subdir,
-        config.paths.raw_subdir,
         processed_path=processed_path,
     )
 
@@ -50,20 +49,21 @@ def process_pdf(pdf_path: str, config, ai_client=None) -> bool:
     logger.info(f"Processing: {pdf_path}")
 
     try:
-        text, metadata = extract_text(pdf_path)
+        raw_text = extract_pdf_text(pdf_path)
     except Exception as e:
-        _log_error(error_log_path, f"PDF extraction failed for {pdf_path}: {e}")
+        _log_error(error_log_path, f"PDF text extraction failed for {pdf_path}: {e}")
         return False
 
-    title = metadata.get("title") or "Untitled"
-    writer.save_raw_text(text, title, pdf_path)
-
+    # Use LLM to extract title, authors, keywords, and generate report
     try:
         generator = ReportGenerator(config, ai)
-        report = generator.generate_report(text, metadata, source_file=pdf_path)
+        result = generator.generate_report(raw_text, source_file=pdf_path, multi_angle=config.report.multi_angle)
     except Exception as e:
         _log_error(error_log_path, f"AI report generation failed for {pdf_path}: {e}")
         return False
+
+    title = result["title"]
+    report = result["markdown"]
 
     try:
         writer.save_report(report, title, pdf_path)
@@ -87,6 +87,7 @@ def main():
     logger.info(f"Watching: {config.paths.raw_papers}")
     logger.info(f"Output: {config.paths.obsidian_vault}/{config.paths.wiki_subdir}")
     logger.info(f"AI Backend: {config.ai.backend}")
+    logger.info(f"Multi-angle analysis: {'ON' if config.report.multi_angle else 'OFF'}")
 
     from watchdog.observers import Observer
     from watchdog.events import FileSystemEventHandler

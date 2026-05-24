@@ -20,7 +20,7 @@ def _make_config(backend="ollama"):
     return Config(
         paths=PathsConfig(raw_papers="/tmp/papers", obsidian_vault="/tmp/vault"),
         ai=ai,
-        report=ReportConfig(language="zh-CN"),
+        report=ReportConfig(),
         processing=ProcessingConfig(temp_dir="/tmp/test"),
     )
 

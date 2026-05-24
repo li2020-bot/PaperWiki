@@ -9,18 +9,16 @@ logger = logging.getLogger("paperwiki.obsidian_writer")
 
 
 class ObsidianWriter:
-    def __init__(self, obsidian_vault: str, wiki_subdir: str, raw_subdir: str,
+    def __init__(self, obsidian_vault: str, wiki_subdir: str,
                  processed_path: str = "processed_files.json"):
         self.vault = obsidian_vault
         self.wiki_dir = os.path.join(obsidian_vault, wiki_subdir)
-        self.raw_dir = os.path.join(self.wiki_dir, raw_subdir)
         self.processed_path = processed_path
         self._ensure_dirs()
         self._processed = self._load_processed()
 
     def _ensure_dirs(self):
         os.makedirs(self.wiki_dir, exist_ok=True)
-        os.makedirs(self.raw_dir, exist_ok=True)
 
     def _sanitize_filename(self, name: str) -> str:
         return re.sub(r'[\\/:*?"<>|]', "_", name)
@@ -35,8 +33,17 @@ class ObsidianWriter:
 
     def _load_processed(self) -> dict:
         if os.path.exists(self.processed_path):
-            with open(self.processed_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+            try:
+                with open(self.processed_path, "r", encoding="utf-8") as f:
+                    content = f.read().strip()
+                    if not content:
+                        return {}
+                    return json.loads(content)
+            except json.JSONDecodeError:
+                logger.warning(
+                    "Corrupt processed file at %s, resetting.", self.processed_path
+                )
+                return {}
         return {}
 
     def _save_processed(self):
@@ -67,11 +74,3 @@ class ObsidianWriter:
             f.write(report_markdown)
         self._mark_processed(source_file, filename)
         logger.info("Report saved: %s", filepath)
-
-    def save_raw_text(self, raw_text: str, title: str, source_file: str):
-        filename = self._sanitize_filename(title) + ".md"
-        filepath = os.path.join(self.raw_dir, filename)
-        content = f"# {title}\n\n{raw_text}\n\n---\n*原始提取文本 | 来源: {os.path.basename(source_file)}*"
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(content)
-        logger.info("Raw text saved: %s", filepath)

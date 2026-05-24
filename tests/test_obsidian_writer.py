@@ -12,7 +12,7 @@ def _temp_pdf(dir_path: str, filename: str, content: bytes = b"pdf content") -> 
 
 
 def test_sanitize_filename():
-    w = ObsidianWriter("/tmp/vault", "wiki", "raw")
+    w = ObsidianWriter("/tmp/vault", "wiki")
     assert w._sanitize_filename("Deep Learning: A Survey") == "Deep Learning_ A Survey"
     assert w._sanitize_filename("a/b:c*d?e\"f<g>h|i") == "a_b_c_d_e_f_g_h_i"
 
@@ -21,7 +21,7 @@ def test_save_report_creates_file():
     with tempfile.TemporaryDirectory() as tmp:
         vault = os.path.join(tmp, "vault")
         source_file = _temp_pdf(tmp, "test.pdf")
-        writer = ObsidianWriter(vault, "wiki", "raw")
+        writer = ObsidianWriter(vault, "wiki")
         writer.save_report(
             report_markdown="# Test Report\nContent here.",
             title="Test Paper Title",
@@ -38,33 +38,12 @@ def test_save_report_creates_file():
         assert "Content here." in content
 
 
-def test_save_raw_text_creates_file():
-    with tempfile.TemporaryDirectory() as tmp:
-        vault = os.path.join(tmp, "vault")
-        source_file = _temp_pdf(tmp, "test.pdf")
-        writer = ObsidianWriter(vault, "wiki", "raw")
-        writer.save_raw_text(
-            raw_text="Raw paper text content.",
-            title="Test Paper Title",
-            source_file=source_file,
-        )
-
-        expected_dir = os.path.join(vault, "wiki", "raw")
-        expected_file = os.path.join(expected_dir, "Test Paper Title.md")
-        assert os.path.exists(expected_file)
-
-        with open(expected_file, "r") as f:
-            content = f.read()
-        assert "Raw paper text content." in content
-        assert "# Test Paper Title" in content
-
-
 def test_processed_files_tracking():
     with tempfile.TemporaryDirectory() as tmp:
         vault = os.path.join(tmp, "vault")
         processed_path = os.path.join(tmp, "processed.json")
         source_file = _temp_pdf(tmp, "paper1.pdf")
-        writer = ObsidianWriter(vault, "wiki", "raw", processed_path)
+        writer = ObsidianWriter(vault, "wiki", processed_path)
 
         writer.save_report("# Report", "Paper One", source_file)
 
@@ -80,7 +59,7 @@ def test_is_processed():
         vault = os.path.join(tmp, "vault")
         processed_path = os.path.join(tmp, "processed.json")
         source_file = _temp_pdf(tmp, "paper.pdf")
-        writer = ObsidianWriter(vault, "wiki", "raw", processed_path)
+        writer = ObsidianWriter(vault, "wiki", processed_path)
 
         assert not writer.is_processed(source_file)
 

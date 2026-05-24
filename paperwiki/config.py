@@ -48,7 +48,6 @@ class PathsConfig:
     raw_papers: str = ""
     obsidian_vault: str = ""
     wiki_subdir: str = "wiki"
-    raw_subdir: str = "raw"
 
     def __post_init__(self):
         self.raw_papers = _expand_path(self.raw_papers)
@@ -57,7 +56,7 @@ class PathsConfig:
 
 @dataclass
 class ReportConfig:
-    language: str = "zh-CN"
+    multi_angle: bool = True
 
 
 @dataclass

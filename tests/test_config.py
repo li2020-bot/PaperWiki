@@ -9,14 +9,13 @@ paths:
   raw_papers: ~/papers
   obsidian_vault: ~/vault
   wiki_subdir: wiki
-  raw_subdir: raw
 ai:
   backend: ollama
   ollama:
     base_url: http://localhost:11434
     model: qwen3
 report:
-  language: zh-CN
+  multi_angle: false
 processing:
   temp_dir: /tmp/test
 """
@@ -29,10 +28,10 @@ processing:
         assert config.paths.raw_papers.endswith("papers")
         assert config.paths.obsidian_vault.endswith("vault")
         assert config.paths.wiki_subdir == "wiki"
-        assert config.paths.raw_subdir == "raw"
         assert config.ai.backend == "ollama"
         assert config.ai.ollama.base_url == "http://localhost:11434"
         assert config.ai.ollama.model == "qwen3"
+        assert config.report.multi_angle is False
     finally:
         os.unlink(tmp_path)
 
@@ -45,7 +44,6 @@ paths:
   raw_papers: ~/papers
   obsidian_vault: ~/vault
   wiki_subdir: wiki
-  raw_subdir: raw
 ai:
   backend: openai
   openai:
@@ -53,7 +51,7 @@ ai:
     api_key: ${TEST_API_KEY}
     model: gpt-4o
 report:
-  language: zh-CN
+  multi_angle: false
 processing:
   temp_dir: /tmp/test
 """
@@ -64,6 +62,7 @@ processing:
         try:
             config = load_config(tmp_path)
             assert config.ai.openai.api_key == "sk-test-123"
+            assert config.report.multi_angle is False
         finally:
             os.unlink(tmp_path)
     finally:

@@ -4,3 +4,4 @@ __pycache__/
 processed_files.json
 error.log
 .paperwiki_processed.json
+config.yaml
