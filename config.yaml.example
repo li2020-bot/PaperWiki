@@ -1,36 +1,74 @@
+# ============================================================
+# PaperWiki 配置文件
+# ============================================================
+# 使用方法：修改以下三个部分的配置，然后启动程序即可
+#   macOS:   双击 launcher.command
+#   Windows: 双击 launcher.bat
+
+# ----------------------------------------------------------
+# 一、路径配置
+# ----------------------------------------------------------
 paths:
+  # 论文存放目录 — 把 PDF 论文放到这个文件夹，程序会自动检测并处理
   raw_papers: ~/Documents/raw_papers
+
+  # Obsidian Vault 路径 — 生成的 Markdown 报告会保存到这里
   obsidian_vault: ~/Documents/Obsidian Vault2
+
+  # 报告在 Vault 中的子目录名
   wiki_subdir: wiki
 
+# ----------------------------------------------------------
+# 二、AI 模型配置
+# ----------------------------------------------------------
 ai:
-  backend: minimax              # ollama | openai | deepseek | minimax | qwen | custom
+  # 选择后端: ollama | openai | deepseek | minimax | qwen | custom
+  backend: minimax
+
+  # --- Ollama 本地模型 ---
   ollama:
     base_url: http://localhost:11434
     model: qwen3
+
+  # --- OpenAI ---
   openai:
     base_url: https://api.openai.com/v1
     api_key: ${OPENAI_API_KEY}
     model: gpt-4o
+
+  # --- DeepSeek ---
   deepseek:
     base_url: https://api.deepseek.com/v1
     api_key: ${DEEPSEEK_API_KEY}
     model: deepseek-v4-pro
+
+  # --- MiniMax ---
   minimax:
     base_url: https://api.minimax.chat/v1
     api_key: ${MINIMAX_API_KEY}
     model: MiniMax-M2.7-highspeed
+
+  # --- 通义千问 ---
   qwen:
     base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
     api_key: ${QWEN_API_KEY}
     model: qwen-plus
+
+  # --- 自定义 OpenAI 兼容接口 ---
   custom:
     base_url: https://your-api-endpoint
     api_key: ${CUSTOM_API_KEY}
     model: your-model-name
 
+# ----------------------------------------------------------
+# 三、报告配置
+# ----------------------------------------------------------
 report:
+  # 多角度分析：启用后 5 个视角并行分析，报告更详细
   multi_angle: True
 
+# ----------------------------------------------------------
+# 四、处理配置
+# ----------------------------------------------------------
 processing:
   temp_dir: /tmp/paperwiki

@@ -5,3 +5,5 @@ processed_files.json
 error.log
 .paperwiki_processed.json
 config.yaml
+build/
+dist/

@@ -75,8 +75,22 @@ def process_pdf(pdf_path: str, config, ai_client=None) -> bool:
     return True
 
 
+def _find_config() -> str:
+    """Find config.yaml: try beside the executable first, then CWD."""
+    # When running from a PyInstaller bundle, use the executable's directory
+    if getattr(sys, "frozen", False):
+        exe_dir = os.path.dirname(sys.executable)
+        path = os.path.join(exe_dir, "config.yaml")
+        if os.path.exists(path):
+            return path
+    # Fallback: CWD
+    return "config.yaml"
+
+
 def main():
-    config = load_config()
+    config_path = _find_config()
+    print(f"Loading config from: {config_path}")
+    config = load_config(config_path)
 
     os.makedirs(config.paths.raw_papers, exist_ok=True)
     os.makedirs(config.paths.obsidian_vault, exist_ok=True)
